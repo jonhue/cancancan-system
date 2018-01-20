@@ -1,0 +1,113 @@
+module CanCanCan
+    module System
+        module Ability
+
+            extend ActiveSupport::Concern
+
+            def method_missing m, *args
+                if m.to_s[/(.+)_abilities/]
+                    membership_abilities $1, args
+                else
+                    super
+                end
+            end
+
+            def respond_to? m, include_private = false
+                super || m.to_s[/(.+)_abilities/]
+            end
+
+            private
+
+            def membership_abilities class_name, record_class, user, options = {}
+                defaults = {
+                    scope: :membership,
+                    polymorphic: nil,
+                    belongs_to_multiple: false
+                }
+                options = defaults.merge options
+
+                user.belongable_belongings.where(scope: options[:scope].to_s).each do |belonging|
+                    if belonging.belonger_type == class_name.camelize
+                        ability = ability belonging
+                        if options[:belongs_to_multiple]
+                            can ability, record_class, "#{class_name.pluralize}": { id: belonging.belonger_id }
+                        else
+                            if options[:polymorphic]
+                                can ability, record_class, "#{options[:polymorphic]}_id": belonging.belonger_id
+                            else
+                                can ability, record_class, "#{class_name}_id": belonging.belonger_id
+                            end
+                        end
+                    end
+                end
+                user.send("#{class_name.pluralize}").each do |object|
+                    if options[:belongs_to_multiple]
+                        can :manage, record_class, "#{class_name.pluralize}": { id: object.id }
+                    else
+                        if options[:polymorphic]
+                            can :manage, record_class, "#{options[:polymorphic]}_id": object.id
+                        else
+                            can :manage, record_class, "#{class_name}_id": object.id
+                        end
+                    end
+                end
+            end
+
+            def belongable_abilities record_class, user, scope = nil
+                if scope.nil?
+                    user.belongable_belongings.each do |belonging|
+                        belongable_belonging belonging
+                    end
+                else
+                    user.belongable_belongings.where(scope: scope.to_s).each do |belonging|
+                        belongable_belonging belonging
+                    end
+                end
+            end
+            def belongable_belonging belonging
+                if belonging.belonger_type == record_class.name
+                    ability = ability belonging
+                    can ability, record_class, id: belonging.belonger_id if ability
+                end
+            end
+
+            def belonger_abilities record_class, user, scope = nil
+                if scope.nil?
+                    user.belonger_belongings.each do |belonging|
+                        belonger_belonging belonging
+                    end
+                else
+                    user.belonger_belongings.where(scope: scope.to_s).each do |belonging|
+                        belonger_belonging belonging
+                    end
+                end
+            end
+            def belonger_belonging belonging
+                if belonging.belongable_type == record_class.name
+                    ability = ability belonging
+                    can ability, record_class, id: belonging.belongable_id if ability
+                end
+            end
+
+            def public_abilities record_class
+                can :manage, record_class, ability: 'admin', visibility: 'public'
+                can :modify, record_class, ability: 'user', visibility: 'public'
+                can :read, record_class, ability: 'guest', visibility: 'public'
+            end
+
+            def ability object
+                case object.ability
+                when 'admin'
+                    :manage
+                when 'user'
+                    :modify
+                when 'guest'
+                    :read
+                else
+                    nil
+                end
+            end
+
+        end
+    end
+end
