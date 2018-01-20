@@ -27,6 +27,7 @@ CanCanCan System uses one attribute on *relationships* to describe abilities:
         * [Public abilities](#public-abilities)
         * [acts_as_belongable abilities](#acts_as_belongable-abilities)
         * [Membership abilities](#membership-abilities)
+    * [Get abilities](#get-abilities)
 * [To Do](#to-do)
 * [Contributing](#contributing)
     * [Contributors](#contributors)
@@ -264,6 +265,20 @@ end
 ```
 
 **Note:** If your `acts_as_belongable` association in the `Post` model is not following the CanCanCan System naming convention, you can override it by passing the `column` option.
+
+### Get abilities
+
+You can use the `ability` method to get the ability of an ActiveRecord object:
+
+```ruby
+Organization.first.ability
+# => 'guest'
+
+ability Organization.first
+# => :read
+```
+
+It returns a symbol or `nil`.
 
 ---
 
