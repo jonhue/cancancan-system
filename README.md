@@ -23,6 +23,11 @@ CanCanCan System uses one attribute on *relationships* to describe abilities:
 
 * [Installation](#installation)
 * [Usage](#usage)
+    * [Defining abilities](#defining-abilities)
+        * [Public abilities](#public-abilities)
+        * [acts_as_belongable abilities](#acts_as_belongable-abilities)
+        * [Membership abilities](#membership-abilities)
+    * [Example](#example)
 * [To Do](#to-do)
 * [Contributing](#contributing)
     * [Contributors](#contributors)
@@ -90,6 +95,53 @@ class User < ApplicationRecord
     acts_as_belongable
 end
 ```
+
+### Defining Abilities
+
+CanCanCan System makes an `abilities` method available which simplifies setting up common abilities:
+
+```ruby
+def initialize user
+    abilities Post, user
+end
+```
+
+This is equivalent to:
+
+```ruby
+def initialize user
+    public_abilities Post
+    can :manage, Post, user_id: user.id if user
+end
+```
+
+You can also use the `abilities` method with custom column names and polymorphic associations. This comes in handy when using the [NotificationsRails gem](https://github.com/jonhue/notifications-rails):
+
+```ruby
+def initialize user
+    abilities Notification, user, column: 'target', polymorphic: true, public_abilities: false
+end
+```
+
+This is equivalent to:
+
+```ruby
+def initialize user
+    can :manage, Notification, target_id: user.id, target_type: user.class.name if user
+end
+```
+
+Learn more about the `public_abilities` method [here](#public-abilities).
+
+#### Public abilities
+
+#### acts_as_belongable abilities
+
+#### Membership abilities
+
+### Example
+
+...
 
 ---
 
