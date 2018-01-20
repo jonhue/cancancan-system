@@ -44,39 +44,45 @@ module CanCanCan
             def membership_abilities class_name, record_class, user, options = {}
                 defaults = {
                     scope: :membership,
-                    polymorphic: nil,
-                    belongs_to_multiple: false
+                    column: nil,
+                    polymorphic: false,
+                    acts_as_belongable: false
                 }
                 options = defaults.merge options
 
                 user.belongable_belongings.where(scope: options[:scope].to_s).each do |belonging|
                     if belonging.belonger_type == class_name.camelize
                         ability = ability belonging
-                        if options[:belongs_to_multiple]
-                            can ability, record_class, "#{class_name.pluralize}": { id: belonging.belonger_id }
+                        if options[:acts_as_belongable]
+                            can ability, record_class, "#{column || class_name.pluralize}": { id: belonging.belonger_id }
                         else
                             if options[:polymorphic]
-                                can ability, record_class, "#{options[:polymorphic]}_id": belonging.belonger_id
+                                can ability, record_class, "#{column || class_name}_id": belonging.belonger_id, "#{column || class_name}_type": belonging.belonger_type
                             else
-                                can ability, record_class, "#{class_name}_id": belonging.belonger_id
+                                can ability, record_class, "#{column || class_name}_id": belonging.belonger_id
                             end
                         end
                     end
                 end
                 user.send("#{class_name.pluralize}").each do |object|
-                    if options[:belongs_to_multiple]
-                        can :manage, record_class, "#{class_name.pluralize}": { id: object.id }
+                    if options[:acts_as_belongable]
+                        can :manage, record_class, "#{column || class_name.pluralize}": { id: object.id }
                     else
                         if options[:polymorphic]
-                            can :manage, record_class, "#{options[:polymorphic]}_id": object.id
+                            can :manage, record_class, "#{column || class_name}_id": object.id, "#{column || class_name}_type": object.class.name
                         else
-                            can :manage, record_class, "#{class_name}_id": object.id
+                            can :manage, record_class, "#{column || class_name}_id": object.id
                         end
                     end
                 end
             end
 
-            def belongable_abilities record_class, user, scope = nil
+            def belongable_abilities record_class, user, options = {}
+                defaults = {
+                    scope: nil
+                }
+                options = defaults.merge options
+
                 if scope.nil?
                     user.belongable_belongings.each do |belonging|
                         belongable_belonging belonging
@@ -94,7 +100,12 @@ module CanCanCan
                 end
             end
 
-            def belonger_abilities record_class, user, scope = nil
+            def belonger_abilities record_class, user, options = {}
+                defaults = {
+                    scope: nil
+                }
+                options = defaults.merge options
+
                 if scope.nil?
                     user.belonger_belongings.each do |belonging|
                         belonger_belonging belonging

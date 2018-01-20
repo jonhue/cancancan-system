@@ -15,7 +15,7 @@ CanCanCan System uses one attribute on *relationships* to describe abilities:
 
 * **ability:** Describes the ability of a user with the related object.
 
-`ability` can have any CanCanCan permission, `'admin'` (`:manage`), `'user'` (`:modify`) or `'guest'` (`read`) as value while `visiblity` is limited to `public` and `private`.
+`ability` can have any CanCanCan permission, `'admin'` (`:manage`), `'user'` (`:modify`) or `'guest'` (`:read`) as value while `visiblity` is limited to `public` and `private`.
 
 ---
 
@@ -27,7 +27,6 @@ CanCanCan System uses one attribute on *relationships* to describe abilities:
         * [Public abilities](#public-abilities)
         * [acts_as_belongable abilities](#acts_as_belongable-abilities)
         * [Membership abilities](#membership-abilities)
-    * [Example](#example)
 * [To Do](#to-do)
 * [Contributing](#contributing)
     * [Contributors](#contributors)
@@ -87,15 +86,6 @@ end
 
 **Note:** The aliases (`:create, :read, :update, :destroy`) can be custom.
 
-Lastly, to complete the integration, add the following to your `User` (or similar) model:
-
-```ruby
-class User < ApplicationRecord
-    acts_as_belonger
-    acts_as_belongable
-end
-```
-
 ### Defining Abilities
 
 CanCanCan System makes an `abilities` method available which simplifies setting up common abilities:
@@ -135,13 +125,145 @@ Learn more about the `public_abilities` method [here](#public-abilities).
 
 #### Public abilities
 
+The `public_abilities` method defines the object-abilities without a `user` being present:
+
+```ruby
+def initialize user
+    public_abilities Post
+end
+```
+
+This is equivalent to:
+
+```ruby
+def initialize user
+    can :manage, Post, ability: 'admin', visibility: 'public'
+    can :modify, Post, ability: 'user', visibility: 'public'
+    can :read, Post, ability: 'guest', visibility: 'public'
+end
+```
+
 #### acts_as_belongable abilities
+
+CanCanCan System integrates with the [acts_as_belongable gem](https://github.com/jonhue/acts_as_belongable) to make defining abilities for relationships dead simple.
+
+Let's say our users can be a member of multiple organizations:
+
+```ruby
+class User < ApplicationRecord
+    acts_as_belongable
+    belongable :member_of_organizations, 'Organization', scope: :membership
+    has_many :organizations
+end
+
+class Organization < ApplicationRecord
+    acts_as_belonger
+    belonger :members, 'User', scope: :membership
+    belongs_to :user
+end
+```
+
+We would then just do:
+
+```ruby
+def initialize user
+    abilities Organization, user do
+        belonger_abilities Organization, user, scope: :membership
+    end
+end
+```
+
+**Note:** This can be done in the same way with `belongable_abilities` for `belongable` relationships.
+
+Now we are able to add members to our organizations and set their abilities:
+
+```ruby
+Organization.first.add_belongable User.first, scope: :membership, ability: 'admin'
+```
+
+**Note:** The `scope` option is optional. If omitted, the defined abilities will apply to all belongings regardless of their scope.
 
 #### Membership abilities
 
-### Example
+Now, let us assume that we have another model: `Post`.
 
-...
+```ruby
+class User < ApplicationRecord
+    acts_as_belongable
+    belongable :member_of_organizations, 'Organization', scope: :membership
+    has_many :posts
+    has_many :organizations
+end
+
+class Organization < ApplicationRecord
+    acts_as_belonger
+    belonger :members, 'User', scope: :membership
+    has_many :posts
+    belongs_to :user
+end
+
+class Post < ApplicationRecord
+    belongs_to :user
+    belongs_to :organization
+end
+```
+
+You want the posts of an organization to be accessible for its members. It doesn't get any simpler than this:
+
+```ruby
+def initialize user
+    abilities Post, user do
+        organization_abilities Post, user, scope: :membership
+    end
+end
+```
+
+**Note:** The `scope` option is optional. If omitted, the defined abilities will apply to all belongings regardless of their scope.
+
+You are also able to perform some customization:
+
+```ruby
+class Post < ApplicationRecord
+    belongs_to :user
+    belongs_to :object, polymorphic: true
+end
+```
+
+```ruby
+def initialize user
+    abilities Post, user do
+        organization_abilities Post, user, scope: :membership, column: 'object', polymorphic: true
+    end
+end
+```
+
+Another option is to use the [acts_as_belongable gem](https://github.com/jonhue/acts_as_belongable) to associate posts with organizations:
+
+```ruby
+class Organization < ApplicationRecord
+    acts_as_belonger
+    belonger :members, 'User', scope: :membership
+    belonger :posts, 'Post'
+    has_many :posts
+    belongs_to :user
+end
+
+class Post < ApplicationRecord
+    acts_as_belongable
+    belongable :organizations, 'Organization'
+    belongs_to :user
+end
+```
+
+```ruby
+def initialize user
+    abilities Post, user do
+        organization_abilities Post, user, scope: :membership, acts_as_belongable: true
+    end
+end
+```
+
+**Note:** If your `acts_as_belongable` association in the `Post` model is not following the CanCanCan System naming convention, you can override it by passing the `column` option.
 
 ---
 
