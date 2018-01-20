@@ -18,6 +18,13 @@ module CanCanCan
 
             private
 
+            def modify aliases
+                alias_action aliases, to: :modify
+            end
+
+            def abilities
+            end
+
             def membership_abilities class_name, record_class, user, options = {}
                 defaults = {
                     scope: :membership,
@@ -103,8 +110,10 @@ module CanCanCan
                     :modify
                 when 'guest'
                     :read
-                else
+                when nil
                     nil
+                else
+                    object.ability.to_sym
                 end
             end
 

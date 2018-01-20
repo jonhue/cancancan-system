@@ -2,7 +2,20 @@
 
 [![Gem Version](https://badge.fury.io/rb/cancancan-system.svg)](https://badge.fury.io/rb/cancancan-system) <img src="https://travis-ci.org/jonhue/cancancan-system.svg?branch=master" />
 
-Conventions & helpers simplifying the use of CanCanCan in complex Rails applications.
+Conventions & helpers simplifying the use of CanCanCan in complex Rails applications. CanCanCan System simplifies authorizing collaborations, memberships and more across a complex structure of models.
+
+To describe complex abilities CanCanCan System relies on two different constructs: ActiveRecord **objects**, and **relations** of users to those objects.
+
+CanCanCan System uses two attributes on *objects* to describe abilities:
+
+* **ability:** Describes the default ability of users without a special relationship with an object.
+* **visiblity:** Specifies whether an object is visible to other users than the creator.
+
+CanCanCan System uses one attribute on *relationships* to describe abilities:
+
+* **ability:** Describes the ability of a user with the related object.
+
+`ability` can have any CanCanCan permission, `'admin'` (`:manage`), `'user'` (`:modify`) or `'guest'` (`read`) as value while `visiblity` is limited to `public` and `private`.
 
 ---
 
@@ -52,7 +65,7 @@ To wrap things up, migrate the changes to your database:
 
 ## Usage
 
-To get started add CanCanCan System to your `Ability` class (`app/models/ability.rb`) and add the required `alias_action` for `:modify`:
+To get started add CanCanCan System to your `Ability` class (`app/models/ability.rb`) and add the required `:modify` alias:
 
 ```ruby
 class Ability
@@ -61,13 +74,13 @@ class Ability
     include CanCanCan::System::Ability
 
     def initialize user
-        alias_action :create, :read, :update, :destroy, to: :modify
+        modify [:create, :read, :update, :destroy]
     end
 
 end
 ```
 
-**Note:** The actual aliases (`:create, :read, :update, :destroy`) can be custom.
+**Note:** The aliases (`:create, :read, :update, :destroy`) can be custom.
 
 Lastly, to complete the integration, add the following to your `User` (or similar) model:
 
