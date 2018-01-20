@@ -52,18 +52,7 @@ To wrap things up, migrate the changes to your database:
 
 ## Usage
 
-To get started add CanCanCan System to your `Ability` class (`app/models/ability.rb`):
-
-```ruby
-class Ability
-
-    include CanCan::Ability
-    include CanCanCan::System::Ability
-
-end
-```
-
-Next add the required `alias_action` for `:modify`:
+To get started add CanCanCan System to your `Ability` class (`app/models/ability.rb`) and add the required `alias_action` for `:modify`:
 
 ```ruby
 class Ability
@@ -78,7 +67,7 @@ class Ability
 end
 ```
 
-**Note:** The actual aliases can be custom.
+**Note:** The actual aliases (`:create, :read, :update, :destroy`) can be custom.
 
 Lastly, to complete the integration, add the following to your `User` (or similar) model:
 
