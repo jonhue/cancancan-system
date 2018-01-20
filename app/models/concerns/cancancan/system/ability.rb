@@ -22,7 +22,23 @@ module CanCanCan
                 alias_action aliases, to: :modify
             end
 
-            def abilities
+            def abilities record_class, user, options = {}
+                defaults = {
+                    column: 'user',
+                    polymorphic: false,
+                    public_abilities: true
+                }
+                options = defaults.merge options
+
+                public_abilities record_class if options[:public_abilities]
+                if user
+                    if options[:polymorphic]
+                        can :manage, record_class, "#{options[:column]}_id": user.id, "#{options[:column]}_type": user.class.name
+                    else
+                        can :manage, record_class, "#{options[:column]}_id": user.id
+                    end
+                    yield
+                end
             end
 
             def membership_abilities class_name, record_class, user, options = {}

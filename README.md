@@ -4,7 +4,7 @@
 
 Conventions & helpers simplifying the use of CanCanCan in complex Rails applications. CanCanCan System simplifies authorizing collaborations, memberships and more across a complex structure of models.
 
-To describe complex abilities CanCanCan System relies on two different constructs: ActiveRecord **objects**, and **relations** of users to those objects.
+To describe complex abilities CanCanCan System relies on two different constructs: ActiveRecord **objects**, and **relationships** of users to those objects.
 
 CanCanCan System uses two attributes on *objects* to describe abilities:
 
