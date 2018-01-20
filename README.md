@@ -87,6 +87,18 @@ end
 
 **Note:** The aliases (`:create, :read, :update, :destroy`) can be custom.
 
+You should add the `ability` attribute to ActiveRecord models you want to [define abilities](#defining-abilities) for:
+
+```ruby
+add_column :users, :ability, :string, default: 'guest'
+```
+
+And you should add a `visiblity` attribute to ActiveRecord models you want to define [public abilities](#public-abilities) for:
+
+```ruby
+add_column :users, :visiblity, :string, default: 'public'
+```
+
 ### Defining Abilities
 
 CanCanCan System makes an `abilities` method available which simplifies setting up common abilities:
