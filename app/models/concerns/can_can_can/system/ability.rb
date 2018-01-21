@@ -83,12 +83,12 @@ module CanCanCan
                 }
                 options = defaults.merge options
 
-                if scope.nil?
+                if options[:scope].nil?
                     user.belongable_belongings.each do |belonging|
                         belongable_belonging belonging
                     end
                 else
-                    user.belongable_belongings.where(scope: scope.to_s).each do |belonging|
+                    user.belongable_belongings.where(scope: options[:scope].to_s).each do |belonging|
                         belongable_belonging belonging
                     end
                 end
@@ -106,12 +106,12 @@ module CanCanCan
                 }
                 options = defaults.merge options
 
-                if scope.nil?
+                if options[:scope].nil?
                     user.belonger_belongings.each do |belonging|
                         belonger_belonging belonging
                     end
                 else
-                    user.belonger_belongings.where(scope: scope.to_s).each do |belonging|
+                    user.belonger_belongings.where(scope: options[:scope].to_s).each do |belonging|
                         belonger_belonging belonging
                     end
                 end
