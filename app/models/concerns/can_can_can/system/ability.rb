@@ -29,7 +29,6 @@ module CanCanCan
                     public_abilities: true
                 }
                 options = defaults.merge options
-                raise options.inspect
 
                 public_abilities record_class if options[:public_abilities]
                 if user
@@ -138,10 +137,8 @@ module CanCanCan
                     :modify
                 when 'guest'
                     :read
-                when nil
-                    nil
                 else
-                    object.ability.to_sym
+                    object.ability&.to_sym
                 end
             end
 
