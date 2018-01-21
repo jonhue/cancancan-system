@@ -33,9 +33,9 @@ module CanCanCan
                 public_abilities record_class if options[:public_abilities]
                 if user
                     if options[:polymorphic]
-                        can :manage, record_class, "#{options[:column]}_id": user.id, "#{options[:column]}_type": user.class.name
+                        can :manage, record_class, "#{get_column(options[:column])}": user.id, "#{get_column(options[:column], 'type')}": user.class.name
                     else
-                        can :manage, record_class, "#{options[:column]}_id": user.id
+                        can :manage, record_class, "#{get_column(options[:column])}": user.id
                     end
                     yield if block_given?
                 end
@@ -57,9 +57,9 @@ module CanCanCan
                             can ability, record_class, "#{options[:column] || class_name.pluralize}": { id: belonging.belonger_id }
                         else
                             if options[:polymorphic]
-                                can ability, record_class, "#{options[:column] || class_name}_id": belonging.belonger_id, "#{options[:column] || class_name}_type": belonging.belonger_type
+                                can ability, record_class, "#{get_column(options[:column] || class_name)}": belonging.belonger_id, "#{get_column(options[:column] || class_name, 'type')}": belonging.belonger_type
                             else
-                                can ability, record_class, "#{options[:column] || class_name}_id": belonging.belonger_id
+                                can ability, record_class, "#{get_column(options[:column] || class_name)}": belonging.belonger_id
                             end
                         end
                     end
@@ -69,9 +69,9 @@ module CanCanCan
                         can :manage, record_class, "#{options[:column] || class_name.pluralize}": { id: object.id }
                     else
                         if options[:polymorphic]
-                            can :manage, record_class, "#{options[:column] || class_name}_id": object.id, "#{options[:column] || class_name}_type": object.class.name
+                            can :manage, record_class, "#{get_column(options[:column] || class_name)}": object.id, "#{get_column(options[:column] || class_name, 'type')}": object.class.name
                         else
-                            can :manage, record_class, "#{options[:column] || class_name}_id": object.id
+                            can :manage, record_class, "#{get_column(options[:column] || class_name)}": object.id
                         end
                     end
                 end
@@ -139,6 +139,15 @@ module CanCanCan
                     :read
                 else
                     object.ability&.to_sym
+                end
+            end
+
+
+            def get_column column, name = 'id'
+                if column.nil? || column == ''
+                    name
+                else
+                    "#{column}_#{name}"
                 end
             end
 

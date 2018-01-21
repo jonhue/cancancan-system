@@ -126,6 +126,8 @@ def initialize user
 end
 ```
 
+**Note:** Set `column` to `nil` or `''` to use the `id` attribute.
+
 This is equivalent to:
 
 ```ruby
