@@ -6,7 +6,7 @@ module CanCanCan
 
             def method_missing m, *args
                 if m.to_s[/(.+)_abilities/]
-                    membership_abilities $1, args
+                    membership_abilities $1, *args
                 else
                     super
                 end
@@ -19,7 +19,7 @@ module CanCanCan
             private
 
             def modify aliases
-                alias_action aliases, to: :modify
+                alias_action *aliases, to: :modify
             end
 
             def abilities record_class, user, options = {}
@@ -29,6 +29,7 @@ module CanCanCan
                     public_abilities: true
                 }
                 options = defaults.merge options
+                raise options.inspect
 
                 public_abilities record_class if options[:public_abilities]
                 if user
@@ -37,7 +38,7 @@ module CanCanCan
                     else
                         can :manage, record_class, "#{options[:column]}_id": user.id
                     end
-                    yield
+                    yield if block_given?
                 end
             end
 
