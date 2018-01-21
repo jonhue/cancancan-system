@@ -54,24 +54,24 @@ module CanCanCan
                     if belonging.belonger_type == class_name.camelize
                         ability = ability belonging
                         if options[:acts_as_belongable]
-                            can ability, record_class, "#{column || class_name.pluralize}": { id: belonging.belonger_id }
+                            can ability, record_class, "#{options[:column] || class_name.pluralize}": { id: belonging.belonger_id }
                         else
                             if options[:polymorphic]
-                                can ability, record_class, "#{column || class_name}_id": belonging.belonger_id, "#{column || class_name}_type": belonging.belonger_type
+                                can ability, record_class, "#{options[:column] || class_name}_id": belonging.belonger_id, "#{options[:column] || class_name}_type": belonging.belonger_type
                             else
-                                can ability, record_class, "#{column || class_name}_id": belonging.belonger_id
+                                can ability, record_class, "#{options[:column] || class_name}_id": belonging.belonger_id
                             end
                         end
                     end
                 end
                 user.send("#{class_name.pluralize}").each do |object|
                     if options[:acts_as_belongable]
-                        can :manage, record_class, "#{column || class_name.pluralize}": { id: object.id }
+                        can :manage, record_class, "#{options[:column] || class_name.pluralize}": { id: object.id }
                     else
                         if options[:polymorphic]
-                            can :manage, record_class, "#{column || class_name}_id": object.id, "#{column || class_name}_type": object.class.name
+                            can :manage, record_class, "#{options[:column] || class_name}_id": object.id, "#{options[:column] || class_name}_type": object.class.name
                         else
-                            can :manage, record_class, "#{column || class_name}_id": object.id
+                            can :manage, record_class, "#{options[:column] || class_name}_id": object.id
                         end
                     end
                 end
