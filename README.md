@@ -228,7 +228,7 @@ You want the posts of an organization to be accessible for its members. It doesn
 ```ruby
 def initialize user
     abilities Post, user do
-        organization_abilities Post, user, scope: :membership
+        membership_abilities 'Organization', Post, user, scope: :membership
     end
 end
 ```
@@ -247,7 +247,7 @@ end
 ```ruby
 def initialize user
     abilities Post, user do
-        organization_abilities Post, user, scope: :membership, column: 'object', polymorphic: true
+        membership_abilities 'Organization', Post, user, scope: :membership, column: 'object', polymorphic: true
     end
 end
 ```
