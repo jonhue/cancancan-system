@@ -18,7 +18,7 @@ Gem::Specification.new do |gem|
     gem.add_dependency 'railties', '>= 5.0'
     gem.add_dependency 'activesupport', '>= 5.0'
     gem.add_dependency 'cancancan', '~> 2.1'
-    gem.add_dependency 'acts_as_belongable', '~> 1.1'
+    gem.add_dependency 'acts_as_belongable', '~> 2.1'
     gem.required_ruby_version = '>= 2.3'
 
     gem.add_development_dependency 'rspec', '~> 3.7'
