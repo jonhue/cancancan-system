@@ -1,6 +1,6 @@
 # CanCanCan System
 
-[![Gem Version](https://badge.fury.io/rb/cancancan-system.svg)](https://badge.fury.io/rb/cancancan-system) <img src="https://travis-ci.org/jonhue/cancancan-system.svg?branch=master" />
+[![Gem Version](https://badge.fury.io/rb/cancancan-system.svg)](https://badge.fury.io/rb/cancancan-system) ![Travis](https://travis-ci.org/jonhue/cancancan-system.svg?branch=master)
 
 Conventions & helpers simplifying the use of CanCanCan in complex Rails applications. CanCanCan System simplifies authorizing collaborations, memberships and more across a complex structure of models.
 
@@ -23,16 +23,15 @@ CanCanCan System uses one attribute on *relationships* to describe abilities:
 
 * [Installation](#installation)
 * [Usage](#usage)
-    * [Defining abilities](#defining-abilities)
-        * [Public abilities](#public-abilities)
-        * [acts_as_belongable abilities](#acts_as_belongable-abilities)
-        * [Membership abilities](#membership-abilities)
-    * [Get abilities](#get-abilities)
+  * [Defining abilities](#defining-abilities)
+    * [Public abilities](#public-abilities)
+    * [acts_as_belongable abilities](#acts_as_belongable-abilities)
+    * [Membership abilities](#membership-abilities)
+  * [Get abilities](#get-abilities)
+* [Testing](#testing)
 * [To Do](#to-do)
 * [Contributing](#contributing)
-    * [Contributors](#contributors)
-    * [Semantic versioning](#semantic-versioning)
-* [License](#license)
+  * [Semantic versioning](#semantic-versioning)
 
 ---
 
@@ -74,14 +73,12 @@ To get started add CanCanCan System to your `Ability` class (`app/models/ability
 
 ```ruby
 class Ability
+  include CanCan::Ability
+  include CanCanCan::System::Ability
 
-    include CanCan::Ability
-    include CanCanCan::System::Ability
-
-    def initialize user
-        modify [:create, :read, :update, :destroy]
-    end
-
+  def initialize(user)
+    modify([:create, :read, :update, :destroy])
+  end
 end
 ```
 
@@ -104,25 +101,25 @@ add_column :users, :visiblity, :string, default: 'public'
 CanCanCan System makes an `abilities` method available which simplifies setting up common abilities:
 
 ```ruby
-def initialize user
-    abilities Post, user
+def initialize(user)
+  abilities(Post, user)
 end
 ```
 
 This is equivalent to:
 
 ```ruby
-def initialize user
-    public_abilities Post
-    can :manage, Post, user_id: user.id if user
+def initialize(user)
+  public_abilities(Post)
+  can(:manage, Post, user_id: user.id) if user
 end
 ```
 
 You can also use the `abilities` method with custom column names and polymorphic associations. This comes in handy when using the [NotificationsRails gem](https://github.com/jonhue/notifications-rails):
 
 ```ruby
-def initialize user
-    abilities Notification, user, column: 'target', polymorphic: true, public_abilities: false
+def initialize(user)
+  abilities(Notification, user, column: 'target', polymorphic: true, public_abilities: false)
 end
 ```
 
@@ -131,8 +128,8 @@ end
 This is equivalent to:
 
 ```ruby
-def initialize user
-    can :manage, Notification, target_id: user.id, target_type: user.class.name if user
+def initialize(user)
+  can(:manage, Notification, target_id: user.id, target_type: user.class.name) if user
 end
 ```
 
@@ -143,18 +140,18 @@ Learn more about the `public_abilities` method [here](#public-abilities).
 The `public_abilities` method defines the object-abilities without a `user` being present:
 
 ```ruby
-def initialize user
-    public_abilities Post
+def initialize(user)
+  public_abilities(Post)
 end
 ```
 
 This is equivalent to:
 
 ```ruby
-def initialize user
-    can :manage, Post, ability: 'admin', visibility: 'public'
-    can :modify, Post, ability: 'user', visibility: 'public'
-    can :read, Post, ability: 'guest', visibility: 'public'
+def initialize(user)
+  can(:manage, Post, ability: 'admin', visibility: 'public')
+  can(:modify, Post, ability: 'user', visibility: 'public')
+  can(:read, Post, ability: 'guest', visibility: 'public')
 end
 ```
 
@@ -166,25 +163,25 @@ Let's say our users can be a member of multiple organizations:
 
 ```ruby
 class User < ApplicationRecord
-    acts_as_belongable
-    belongable :member_of_organizations, 'Organization', scope: :membership
-    has_many :organizations
+  acts_as_belongable
+  belongable :member_of_organizations, 'Organization', scope: :membership
+  has_many :organizations
 end
 
 class Organization < ApplicationRecord
-    acts_as_belonger
-    belonger :members, 'User', scope: :membership
-    belongs_to :user
+  acts_as_belonger
+  belonger :members, 'User', scope: :membership
+  belongs_to :user
 end
 ```
 
 We would then just do:
 
 ```ruby
-def initialize user
-    abilities Organization, user do
-        belonger_abilities Organization, user, scope: :membership
-    end
+def initialize(user)
+  abilities(Organization, user) do
+    belonger_abilities(Organization, user, scope: :membership)
+  end
 end
 ```
 
@@ -193,7 +190,7 @@ end
 Now we are able to add members to our organizations and set their abilities:
 
 ```ruby
-Organization.first.add_belongable User.first, scope: :membership, ability: 'admin'
+Organization.first.add_belongable(User.first, scope: :membership, ability: 'admin')
 ```
 
 **Note:** The `scope` option is optional. If omitted, the defined abilities will apply to all belongings regardless of their scope.
@@ -204,32 +201,32 @@ Now, let us assume that we have another model: `Post`.
 
 ```ruby
 class User < ApplicationRecord
-    acts_as_belongable
-    belongable :member_of_organizations, 'Organization', scope: :membership
-    has_many :posts
-    has_many :organizations
+  acts_as_belongable
+  belongable :member_of_organizations, 'Organization', scope: :membership
+  has_many :posts
+  has_many :organizations
 end
 
 class Organization < ApplicationRecord
-    acts_as_belonger
-    belonger :members, 'User', scope: :membership
-    has_many :posts
-    belongs_to :user
+  acts_as_belonger
+  belonger :members, 'User', scope: :membership
+  has_many :posts
+  belongs_to :user
 end
 
 class Post < ApplicationRecord
-    belongs_to :user
-    belongs_to :organization
+  belongs_to :user
+  belongs_to :organization
 end
 ```
 
 You want the posts of an organization to be accessible for its members. It doesn't get any simpler than this:
 
 ```ruby
-def initialize user
-    abilities Post, user do
-        membership_abilities 'Organization', Post, user, scope: :membership
-    end
+def initialize(user)
+  abilities(Post, user) do
+    membership_abilities('Organization', Post, user, scope: :membership)
+  end
 end
 ```
 
@@ -239,16 +236,16 @@ You are also able to perform some customization:
 
 ```ruby
 class Post < ApplicationRecord
-    belongs_to :user
-    belongs_to :object, polymorphic: true
+  belongs_to :user
+  belongs_to :object, polymorphic: true
 end
 ```
 
 ```ruby
-def initialize user
-    abilities Post, user do
-        membership_abilities 'Organization', Post, user, scope: :membership, column: 'object', polymorphic: true
-    end
+def initialize(user)
+  abilities(Post, user) do
+    membership_abilities('Organization', Post, user, scope: :membership, column: 'object', polymorphic: true)
+  end
 end
 ```
 
@@ -256,25 +253,25 @@ Another option is to use the [acts_as_belongable gem](https://github.com/jonhue/
 
 ```ruby
 class Organization < ApplicationRecord
-    acts_as_belonger
-    belonger :members, 'User', scope: :membership
-    belonger :posts, 'Post'
-    has_many :posts
-    belongs_to :user
+  acts_as_belonger
+  belonger :members, 'User', scope: :membership
+  belonger :posts, 'Post'
+  has_many :posts
+  belongs_to :user
 end
 
 class Post < ApplicationRecord
-    acts_as_belongable
-    belongable :organizations, 'Organization'
-    belongs_to :user
+  acts_as_belongable
+  belongable :organizations, 'Organization'
+  belongs_to :user
 end
 ```
 
 ```ruby
-def initialize user
-    abilities Post, user do
-        organization_abilities Post, user, scope: :membership, acts_as_belongable: true
-    end
+def initialize(user)
+  abilities(Post, user) do
+    organization_abilities(Post, user, scope: :membership, acts_as_belongable: true)
+  end
 end
 ```
 
@@ -288,7 +285,7 @@ You can use the `ability` method to get the ability of an ActiveRecord object:
 Organization.first.ability
 # => 'guest'
 
-ability Organization.first
+ability(Organization.first)
 # => :read
 ```
 
@@ -296,9 +293,27 @@ It returns a symbol or `nil`.
 
 ---
 
+## Testing
+
+1. Fork this repository
+2. Clone your forked git locally
+3. Install dependencies
+
+    `$ bundle install`
+
+4. Run specs
+
+    `$ bundle exec rspec`
+
+5. Run RuboCop
+
+    `$ bundle exec rubocop`
+
+---
+
 ## To Do
 
-[Here](https://github.com/jonhue/cancancan-system/projects/1) is the full list of current projects.
+We use [GitHub projects](https://github.com/jonhue/cancancan-system/projects/1) to coordinate the work on this project.
 
 To propose your ideas, initiate the discussion by adding a [new issue](https://github.com/jonhue/cancancan-system/issues/new).
 
@@ -310,36 +325,6 @@ We hope that you will consider contributing to CanCanCan System. Please read thi
 
 [Learn more about contributing to this repository](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md)
 
-### Contributors
-
-Give the people some :heart: who are working on this project. See them all at:
-
-https://github.com/jonhue/cancancan-system/graphs/contributors
-
 ### Semantic Versioning
 
 CanCanCan System follows Semantic Versioning 2.0 as defined at http://semver.org.
-
-## License
-
-MIT License
-
-Copyright (c) 2018 Jonas Hübotter
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
